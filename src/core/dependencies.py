@@ -33,9 +33,10 @@ async def get_current_user(db: Session = Depends(get_session), token: str = Depe
     
     try:
         payload = jwt.decode(
-            token=settings.JWT_SECRET,
+            token,
+            settings.JWT_SECRET,
             algorithms=settings.ALGORITHM,
-            options={"verify_aud": False}
+            options={"verify_aud": False},
         )
         
         username: str = payload.get("sub")
@@ -51,7 +52,7 @@ async def get_current_user(db: Session = Depends(get_session), token: str = Depe
         query = select(UsuarioModel).filter(
             UsuarioModel.id == int(token_data.username))
         result = await session.execute(query)
-        usuario: UsuarioModel = result.scalars().unique().one_or_one()
+        usuario: UsuarioModel = result.scalars().unique().one_or_none()
         
         if usuario is None:
             raise credential_exception

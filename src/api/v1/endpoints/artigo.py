@@ -32,7 +32,7 @@ async def get_artigos(db: AsyncSession = Depends(get_session)):
     async with db as session:
         query = select(ArtigoModel)
         result = await session.execute(query)
-        artigos: List[ArtigoModel] = result.scalars().all()
+        artigos: List[ArtigoModel] = result.scalars().unique().all()
 
         return artigos
 
@@ -43,7 +43,7 @@ async def get_artigo(artigo_id: int, db: AsyncSession = Depends(get_session)):
     async with db as session:
         query = select(ArtigoModel).filter(ArtigoModel.id == artigo_id)
         result = await session.execute(query)
-        artigo = result.scalar_one_or_none()
+        artigo = result.scalars().unique().one_or_none()
 
         if artigo:
             return artigo
@@ -59,7 +59,7 @@ async def put_artigo(artigo_id: int, artigo: ArtigoSchema, db: AsyncSession = De
     async with db as session:
         query = select(ArtigoModel).filter(ArtigoModel.id == artigo_id)
         result = await session.execute(query)
-        artigo_up = result.scalar_one_or_none()
+        artigo_up = result.scalars().unique().one_or_none()
 
         if artigo_up:
             if artigo.titulo:
@@ -87,7 +87,7 @@ async def delete_artigo(artigo_id: int, db: AsyncSession = Depends(get_session),
             ArtigoModel.usuario_id == usuario_logado.id)
         
         result = await session.execute(query)
-        artigo_del = result.scalar_one_or_none()
+        artigo_del = result.scalars().unique().one_or_none()
 
         if artigo_del:
             await session.delete(artigo_del)

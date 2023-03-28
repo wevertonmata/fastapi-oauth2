@@ -41,7 +41,7 @@ def _criar_token(tipo_token: str, tempo_vida: timedelta, sub: str) -> str:
     payload["iat"] = datetime.now(tz=sp)
     payload["sub"] = str(sub)
     
-    return jwt.enconde(payload, settings.JWT_SECRET,algorithm=settings.ALGORITHM)
+    return jwt.encode(payload, settings.JWT_SECRET,algorithm=settings.ALGORITHM)
 
 def criar_token_acesso(sub: str) -> str:
     return _criar_token(

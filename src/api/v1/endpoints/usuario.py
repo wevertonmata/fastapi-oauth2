@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy.exc import IntegrityError
 
 from ....models.__all_models import UsuarioModel
 from ....schemas.usuario_schema import UsuarioSchemaArtigos, UsuarioSchemaCreate, UsuarioSchemaUp, UsuarioSchemaBase
@@ -39,9 +40,11 @@ async def post_usuario(usuario: UsuarioSchemaCreate, db: AsyncSession = Depends(
                                 eh_admin =  usuario.eh_admin)
     
     async with db as session:
-        session.add(novo_usuario)
-        await session.commit()
-
+        try:
+            session.add(novo_usuario)
+            await session.commit()
+        except IntegrityError:
+            raise HTTPException(status_code=status.HTTP_406_NOT_ACCEPTABLE, detail="Usuario já existe")
     return novo_usuario
 
 
@@ -62,7 +65,8 @@ async def get_usuario(usuario_id: int, db: AsyncSession = Depends(get_session)):
     async with db as session:
         query = select(UsuarioModel).filter(UsuarioModel.id == usuario_id)
         result = await session.execute(query)
-        usuario = result.scalar_one_or_none()
+        usuario: UsuarioSchemaArtigos = result.scalars().unique().one_or_none()
+
 
         if usuario:
             return usuario
@@ -77,7 +81,7 @@ async def put_usuario(usuario_id: int, usuario: UsuarioSchemaUp, db: AsyncSessio
     async with db as session:
         query = select(UsuarioModel).filter(UsuarioModel.id == usuario_id)
         result = await session.execute(query)
-        usuario_up = result.scalar_one_or_none()
+        usuario_up: UsuarioSchemaBase = result.scalars().unique().one_or_none()
 
         if usuario_up:
             if usuario.nome:
@@ -106,7 +110,7 @@ async def delete_usuario(usuario_id: int, db: AsyncSession = Depends(get_session
         query = select(UsuarioModel).filter(UsuarioModel.id == usuario_id)
         
         result = await session.execute(query)
-        usuario_del = result.scalar_one_or_none()
+        usuario_del: UsuarioSchemaBase = result.scalars().unique().one_or_none()
 
         if usuario_del:
             await session.delete(usuario_del)
